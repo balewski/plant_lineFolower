@@ -1,0 +1,25 @@
+"""Animate illustrative switch levers in both overview groups for eight seconds."""
+from pathlib import Path
+import math
+import FreeCAD as App
+import FreeCADGui as Gui
+from PySide import QtCore
+ROOT=Path(__file__).resolve().parent.parent
+doc=next((d for d in App.listDocuments().values() if d.getObject('AssembledRobot') and d.getObject('ExplodedRobot')),None)
+if doc is None:doc=App.openDocument(str(ROOT/'main_overview.FCStd'))
+App.setActiveDocument(doc.Name)
+if hasattr(Gui,'_robot_toggle_timer'):Gui._robot_toggle_timer.stop()
+state={'frame':0}
+def animate():
+    state['frame']+=1
+    for obj in doc.Objects:
+        if hasattr(obj,'MountPlacement') and hasattr(obj,'LeverAngle'):
+            sign=1 if 'Toggle1' in obj.Name else -1
+            angle=25*math.sin(state['frame']*2*math.pi/40)*sign
+            obj.LeverAngle=angle
+            obj.Placement=obj.MountPlacement.multiply(App.Placement(App.Vector(),App.Rotation(App.Vector(1,0,0),angle)))
+    doc.recompute();Gui.updateGui()
+    if state['frame']>=160:Gui._robot_toggle_timer.stop()
+Gui._robot_toggle_timer=QtCore.QTimer()
+Gui._robot_toggle_timer.timeout.connect(animate)
+Gui._robot_toggle_timer.start(50)
