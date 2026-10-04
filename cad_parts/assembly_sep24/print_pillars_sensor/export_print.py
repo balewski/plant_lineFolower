@@ -1,4 +1,4 @@
-"""Export five current lower-deck parts in a fixed PETG print layout."""
+"""Export the two pillar frames and the sensor holder in a fixed PETG print layout."""
 from pathlib import Path
 import json,hashlib,zipfile,xml.etree.ElementTree as ET
 import FreeCAD as App

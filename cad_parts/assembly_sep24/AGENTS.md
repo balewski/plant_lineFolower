@@ -38,7 +38,7 @@ This unified document guides automated agents and developers on preparing, slici
 3. **Adhesion & Speed Settings**:
    - First layer speeds: 15 mm/s for walls/perimeters, 20 mm/s for infill.
    - Layer height: 0.20 mm (first layer and subsequent layers).
-   - Infill: 35% gyroid/grid, 4 wall loops.
+   - Infill: 35% zig-zag (as set in each `process.json`), 4 wall loops.
 
 4. **Startup G-Code Safety**:
    - Emitted G-code must use positive-Z purge travel (lift to Z=1 before lateral movement) to prevent nozzle scraping.
@@ -60,20 +60,23 @@ This inspects the native `.FCStd` source, checks solid validity, harmonizes norm
 - Packed `.3mf` layout file positioned on the 270 × 270 mm bed.
 - `export_validation.json` recording source and mesh SHA-256 hashes.
 
+All of these are written to `cad_parts/assembly_sep24/tmp/`, a git-ignored working area for regenerable files; overwrite freely.
+
 ### Step 2: Slice with QIDIStudio CLI
 Execute QIDIStudio headlessly using the local configuration JSONs:
 ```bash
 cd cad_parts/assembly_sep24/<print_dir>
+mkdir -p ../tmp/<slice_dir>
 /Applications/QIDIStudio.app/Contents/MacOS/QIDIStudio \
   --load-settings 'machine.json;process.json' \
   --load-filaments filament.json \
   --load-defaultfila \
   --arrange 0 --orient 0 --slice 0 \
   --export-3mf <output_name>.3mf \
-  --outputdir "$(pwd)" \
-  <layout_name>.3mf
+  --outputdir "$(cd ../tmp/<slice_dir> && pwd)" \
+  ../tmp/<layout_name>.3mf
 ```
-Extract `plate_1.gcode` from the generated sliced `.3mf` or use emitted G-code directly.
+`plate_1.gcode` is written next to the sliced `.3mf` in `tmp/<slice_dir>/`; use it directly.
 
 ### Step 3: Check Printer Readiness
 Verify via Moonraker API that the printer is connected, idle, and ready:
@@ -131,8 +134,8 @@ curl -X POST -H "Content-Type: application/json" \
 
 | Print Directory | Source CAD File | Components Included | Orientation & Notes |
 | :--- | :--- | :--- | :--- |
-| `print_lower_deck` | `main_lower_deck.FCStd` | `FinishedChassis`, `LeftMotorClamp`, `CableClamp1–3` | Deck top face down on bed; motor clamp flat with screw recesses down. |
+| `print_lower_deck` | `main_lower_deck.FCStd` | `ChassisWithLeftMotorA`, `LeftMotorClamp`, `CableClamp1–3` | Deck top face down on bed; motor clamp flat with screw recesses down. |
 | `print_pillars_sensor` | `main_pillars.FCStd`, `main_photo_sensor.FCStd` | `FrontPillarFrame`, `AftPillarFrame`, `SensorHolder` | Front rotated +90° on braced face; aft -90°; sensor holder 180° with removable supports. |
-| `print_upper_deck` | `main_upper_deck.FCStd` | `TeensyPlatform`, `BoardRetainingClamp`, `AmmeterSupportBar1–2` | Platform underside flat on bed; clamp and bars flat beside deck. |
+| `print_upper_deck` | `main_upper_deck.FCStd` | `TeensyPlatform`, `BoardRetainingClamp`, `AmmeterSupportC` | Platform underside flat on bed; clamp and ammeter support flat beside deck. |
 | `print_roof_conical` | `main_roof.FCStd` | `MainRoof` | Inverted (180° around X): broad roof face on bed, columns upward. |
-| `print_photo_sensor` | `main_photo_sensor.FCStd` | `SensorHolder`, `CoverStrip`, `BuzzerHolder` | Standalone holder and auxiliary brackets. |
+| `print_photo_sensor` | `main_photo_sensor.FCStd` | `SensorHolder`, `CoverStrip`, `BuzzerHolder` | Holder inverted (180° about X), main face on bed, supports only in the three sensor vaults; cover strip broad face down; buzzer holder ring down. Layer height 0.10 mm. |

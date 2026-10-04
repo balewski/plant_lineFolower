@@ -1,4 +1,4 @@
-"""Export five current lower-deck parts in a fixed PETG print layout."""
+"""Export the three upper-deck parts in a fixed PETG print layout."""
 from pathlib import Path
 import json,hashlib,zipfile,xml.etree.ElementTree as ET
 import FreeCAD as App
@@ -15,13 +15,11 @@ model=ET.Element('{'+ns+'}model',{'unit':'millimeter','{http://www.w3.org/XML/19
 resources=node(model,'resources');build=node(model,'build')
 sources={f:App.openDocument(str(r.parent/f)) for f in ['main_upper_deck.FCStd']}
 hashes={f:hashlib.sha256((r.parent/f).read_bytes()).hexdigest() for f in sources}
-report={'source_sha256':hashes,'parts':[],'orientation':'Upper deck underside flat on bed, mounts and ramps upward. Teensy clasp and both ammeter bars printed flat beside it. Supports may start on the bed or deck surfaces.','bed_mm':[270,270]}
-layout=[('TeensyPlatform','main_upper_deck.FCStd',0,65,75),('BoardRetainingClamp','main_upper_deck.FCStd',0,65,55),('AmmeterSupportBar1','main_upper_deck.FCStd',0,130,55),('AmmeterSupportBar2','main_upper_deck.FCStd',0,155,55)]
+report={'source_sha256':hashes,'parts':[],'orientation':'Upper deck underside flat on bed, mounts and ramps upward. Board retaining clamp and ammeter support printed flat beside it. Supports may start on the bed or deck surfaces.','bed_mm':[270,270]}
+layout=[('TeensyPlatform','main_upper_deck.FCStd',0,65,75),('BoardRetainingClamp','main_upper_deck.FCStd',0,65,55),('AmmeterSupportC','main_upper_deck.FCStd',0,130,55)]
 for i,(name,filename,angle,x,y) in enumerate(layout,1):
  source=r.parent/filename;doc=sources[filename]
- target_obj = doc.getObject(name) or (doc.getObject('AmmeterSupportC') if 'Ammeter' in name else None)
- if target_obj is None: continue
- shape=target_obj.Shape.copy()
+ shape=doc.getObject(name).Shape.copy()
  assert shape.isValid() and len(shape.Solids)==1
  shape.rotate(App.Vector(),App.Vector(1,0,0),angle)
  bb=shape.BoundBox;shape.translate(App.Vector(-bb.XMin,-bb.YMin,-bb.ZMin))
@@ -44,8 +42,7 @@ for i,(name,filename,angle,x,y) in enumerate(layout,1):
   pts,facets=mesh.Topology
   edges=Counter(tuple(sorted((f[j],f[(j+1)%3]))) for f in facets for j in range(3))
   boundary=[e for e,c in edges.items() if c==1]
-  if boundary:
-   assert all(c<=2 for c in edges.values())
+  assert all(c<=2 for c in edges.values())
   print('Boundary diagnostics',name,len(boundary),sorted((round((pts[a]-pts[b]).Length,8) for a,b in boundary)),flush=True)
   assert len(boundary)<=20 and all((pts[a]-pts[b]).Length<0.75 for a,b in boundary)
   # Split mismatched triangulations along collinear boundary vertices.
@@ -99,7 +96,7 @@ for i,(name,filename,angle,x,y) in enumerate(layout,1):
   print('Verified seam repair area',sum(f.Area for f in repairs),flush=True)
   del original_facets
  print('Mesh after cleanup:',mesh.CountPoints,mesh.CountFacets,mesh.isSolid(),flush=True)
- assert mesh.isSolid() or (len(boundary) if 'boundary' in locals() else 0)==0,name
+ assert mesh.isSolid(),name
  assert abs(abs(mesh.Volume)-shape.Volume)/shape.Volume<0.001
  mb=mesh.BoundBox;mesh.translate(-mb.XMin,-mb.YMin,-mb.ZMin)
  target=tmp_dir/(name+'.stl');mesh.write(str(target))
@@ -114,4 +111,4 @@ with zipfile.ZipFile(tmp_dir/'upper_deck_layout.3mf','w',zipfile.ZIP_DEFLATED) a
  z.writestr('_rels/.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Target="/3D/3dmodel.model" Id="rel0" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>')
  z.writestr('3D/3dmodel.model',ET.tostring(model,encoding='utf-8',xml_declaration=True))
 (tmp_dir/'export_validation.json').write_text(json.dumps(report,indent=2)+'\n')
-print('SUCCESS: four closed meshes in fixed layout; current CAD only, no printer action.')
+print('SUCCESS: three closed meshes in fixed layout; current CAD only, no printer action.')

@@ -12,7 +12,7 @@ doc=App.newDocument('RobotOverview');doc.Label='Robot — assembled and exploded
 assembled=doc.addObject('App::DocumentObjectGroup','AssembledRobot');assembled.Label='1 — Fully assembled robot'
 exploded=doc.addObject('App::DocumentObjectGroup','ExplodedRobot');exploded.Label='2 — Exploded robot (offset right)'
 info=doc.addObject('App::FeaturePython','OverviewInformation')
-for key,value in {'Purpose':'Visualization only; embedded snapshots, no links to source CADs','Axes':'X right; Y front; Z up. Ground Z=-20 mm','PiOrientation':f'94 X × 63 Y × 30 Z mm; lower corner ({pi_origin.x:g},-46.5,4)','BatteryOrientation':'76 X × 22 Y × 41 Z mm; lower corner (-38,-82.75,4)','Mocks':'Socket, plug, toggles and PCB component heights are illustrative, not measured hardware','Animation':'Run overview/animate_toggles.FCMacro to move both switch levers','ViewingInstructions':'Space toggles AssembledRobot or ExplodedRobot; both visible by default'}.items():
+for key,value in {'Purpose':'Visualization only; embedded snapshots, no links to source CADs','Axes':'X right; Y front; Z up. Ground Z=-20 mm','PiOrientation':f'94 X × 63 Y × 30 Z mm; lower corner ({pi_origin.x:g},-46.5,4)','BatteryOrientation':'76 X × 22 Y × 41 Z mm; lower corner (-38,-82.75,4.3)','Mocks':'Socket, plug, toggles and PCB component heights are illustrative, not measured hardware','Animation':'Run overview/animate_toggles.FCMacro to move both switch levers','ViewingInstructions':'Space toggles AssembledRobot or ExplodedRobot; both visible by default'}.items():
  info.addProperty('App::PropertyString',key,'Read me');setattr(info,key,value)
 colors={'lower':(.25,.57,.67),'upper':(.90,.58,.25),'pillar':(.82,.65,.33),'board':(.20,.57,.35),'black':(.15,.17,.20),'metal':(.70,.73,.76),'battery':(.20,.36,.75),'pi':(.63,.66,.70)}
 records=[];objects={};switches=[]
@@ -27,7 +27,7 @@ def add(name,shape,kind,shift=(0,0,0),source='',mock=False,check=True,color=None
  objects[name]=obj;records.append(dict(name=name,kind=kind,check=check,mock=mock,source=source,shift=list(shift)))
  return obj
 for item in lower.PrintedParts.Group:
- shift=(0,0,0) if item.Name=='FinishedChassis' else (0,0,-25) if 'MotorClamp' in item.Name else (0,0,-12)
+ shift=(0,0,0) if item.Name=='ChassisWithLeftMotorA' else (0,0,-25) if 'MotorClamp' in item.Name else (0,0,-12)
  add(item.Name,item.Shape,'lower',shift,'main_lower_deck.FCStd#'+item.Name)
 for item in lower.HardwareReferences.Group:
  name=item.Name
@@ -44,7 +44,7 @@ for item in upper.PrintedParts.Group:
 add('TeensyPCB',upper.TeensyPCBReference.Shape,'board',(0,0,118),'main_upper_deck.FCStd#TeensyPCBReference')
 # Exact requested outer envelopes for fit testing; simple colored solids in the overview.
 pi=add('PiEnclosure',Part.makeBox(94,63,30,pi_origin),'pi',(0,0,40),source='User envelope: 30 × 63 × 94 mm')
-battery=add('BatteryPack',Part.makeBox(76,22,41,V(-38,-82.75,4)),'battery',(0,-35,40),source='User envelope: 76 × 41 × 22 mm')
+battery=add('BatteryPack',Part.makeBox(76,22,41,V(-38,-82.75,4.3)),'battery',(0,-35,40),source='User envelope: 76 × 41 × 22 mm')
 for name,w,h,z in [('PowerA',22,44,60),('PowerB',44,22,60)]:
  b=upper.getObject(name+'OutlineOuter').Shape.BoundBox
  pcb=Part.makeBox(w,h,1.6,V(b.XMin,b.YMin,z))
@@ -92,7 +92,7 @@ plug=Part.makeCylinder(2.7,9,V(0,0,-7)).fuse(Part.makeCylinder(4.8,19,V(0,0,-26)
 add('PowerPlug',world(plug,mount),'black',(0,-53,0),'Approximate inserted barrel plug',True)
 # Decorative lid and battery lettering are deliberately not used for fit calculations.
 font=str(R/'assets/DejaVuSans.ttf')
-for label,obj,z in [('Pi',pi,34.05),('76 × 41 × 22',battery,45.05)]:
+for label,obj,z in [('Pi',pi,34.05),('76 × 41 × 22',battery,45.35)]:
  text=Part.makeCompound([Part.makeFace(w,'Part::FaceMakerBullseye') for w in Part.makeWireString(label,font,3,0) if w])
  b=text.BoundBox;t=obj.Shape.BoundBox;text.translate(V((t.XMin+t.XMax-b.XMin-b.XMax)/2,(t.YMin+t.YMax-b.YMin-b.YMax)/2,z))
  add(obj.Name+'Label',text.extrude(V(0,0,.15)),'black',tuple(obj.ExplosionOffset),'Decorative label',check=False)
@@ -118,7 +118,7 @@ for i,r in enumerate(records):
 clearances={}
 for obj in [pi,battery]:
  clearances[obj.Name]={}
- for name in ['TeensyPlatform','AmmeterSupportBar1','AmmeterSupportBar2','FrontPillarFrame','AftPillarFrame']:
+ for name in ['TeensyPlatform','AmmeterSupportC','FrontPillarFrame','AftPillarFrame']:
   clearances[obj.Name][name]=obj.Shape.distToShape(objects[name].Shape)[0]
 foot=Part.makeBox(76,22,.1,V(-38,-82.75,3))
 footprint_outside=foot.cut(lower.RearTransitionFillets.Shape).Volume/.1
@@ -144,7 +144,7 @@ if exploded.ViewObject:exploded.ViewObject.Visibility=True
 report=dict(driver_board={'original_reference_overlap_with_stops_mm3':original_driver_overlap,'shift_up_slope_to_seat_mm':seat_shift,'right_edge_overhang_mm':max(0,board.BoundBox.XMax-upper.UpperFloorBlank.Shape.BoundBox.XMax),'mounting_hole_pattern_verified':False},purpose='Visualization only',source_sha256=hashes,source_designs_modified=False,
  component_count_per_view=len(records),collision_pairs=collisions,boolean_pairs_checked=tested,clearances_mm=clearances,
  battery_footprint_outside_deck_perimeter_mm2=footprint_outside,
- placements={'PiEnclosure':{'size_xyz_mm':[94,63,30],'lower_corner_xyz_mm':[pi_origin.x,pi_origin.y,pi_origin.z]},'BatteryPack':{'size_xyz_mm':[76,22,41],'lower_corner_xyz_mm':[-38,-82.75,4]}},
+ placements={'PiEnclosure':{'size_xyz_mm':[94,63,30],'lower_corner_xyz_mm':[pi_origin.x,pi_origin.y,pi_origin.z]},'BatteryPack':{'size_xyz_mm':[76,22,41],'lower_corner_xyz_mm':[-38,-82.75,4.3]}},
  mock_dimensions_unverified=True,physical_fit_tested=False,manufacturing_exported=False)
 tmp_dir = R / 'tmp'
 tmp_dir.mkdir(parents=True, exist_ok=True)

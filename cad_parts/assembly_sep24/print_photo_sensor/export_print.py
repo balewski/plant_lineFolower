@@ -15,8 +15,8 @@ model=ET.Element('{'+ns+'}model',{'unit':'millimeter','{http://www.w3.org/XML/19
 resources=node(model,'resources');build=node(model,'build')
 sources={f:App.openDocument(str(r.parent/f)) for f in ['main_photo_sensor.FCStd']}
 hashes={f:hashlib.sha256((r.parent/f).read_bytes()).hexdigest() for f in sources}
-report={'source_sha256':hashes,'parts':[],'orientation':'Holder enclosure bottom down with arms parallel to bed and removable supports; U cover broad face down; buzzer ring bottom and flat tab down.','bed_mm':[270,270]}
-layout=[('SensorHolder','main_photo_sensor.FCStd',0,81,127),('CoverStrip','main_photo_sensor.FCStd',0,81,87),('BuzzerHolder','main_photo_sensor.FCStd',0,166,139)]
+report={'source_sha256':hashes,'parts':[],'orientation':'Holder inverted (180 degrees about X) with its main face on the bed; removable supports only in the three sensor vaults; U cover broad face down; buzzer ring bottom and flat tab down.','bed_mm':[270,270]}
+layout=[('SensorHolder','main_photo_sensor.FCStd',180,81,127),('CoverStrip','main_photo_sensor.FCStd',0,81,87),('BuzzerHolder','main_photo_sensor.FCStd',0,166,139)]
 for i,(name,filename,angle,x,y) in enumerate(layout,1):
  source=r.parent/filename;doc=sources[filename]
  shape=doc.getObject(name).Shape.copy()
@@ -25,6 +25,9 @@ for i,(name,filename,angle,x,y) in enumerate(layout,1):
  except ValueError as exc:report.setdefault("cad_boolean_check_warnings",{})[name]=str(exc)
  shape.rotate(App.Vector(),App.Vector(1,0,0),angle)
  bb=shape.BoundBox;shape.translate(App.Vector(-bb.XMin,-bb.YMin,-bb.ZMin))
+ if name=='SensorHolder':
+  # The front pointer sits 0.2 mm proud of the main face; trim it so the face itself lies on the bed.
+  shape=shape.common(Part.makeBox(500,500,500,App.Vector(-100,-100,0.2)));shape.translate(App.Vector(0,0,-0.2))
  shape=shape.removeSplitter()
  fresh=Part.Shape();fresh.importBrepFromString(shape.exportBrepToString());shape=fresh
  mesh=MeshPart.meshFromShape(Shape=shape,LinearDeflection=.01,AngularDeflection=.06,Relative=False)

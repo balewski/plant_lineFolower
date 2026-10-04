@@ -21,11 +21,11 @@ a.translate(-a.BoundBox.Center);b.translate(-b.BoundBox.Center)
 assert a.cut(b).Volume+b.cut(a).Volume<1e-5,'Current clamps are not interchangeable'
 report['motor_clamps_interchangeable']=True
 report['omitted_for_reuse']='RightMotorClamp'
-layout=[('FinishedChassis',60,65),('LeftMotorClamp',188,125),('CableClamp1',187,82),('CableClamp2',202,82),('CableClamp3',217,82)]
+layout=[('ChassisWithLeftMotorA',60,65),('LeftMotorClamp',188,125),('CableClamp1',187,82),('CableClamp2',202,82),('CableClamp3',217,82)]
 for i,(name,x,y) in enumerate(layout,1):
  shape=doc.getObject(name).Shape.copy()
  assert shape.isValid() and len(shape.Solids)==1
- if name=='FinishedChassis':shape.rotate(App.Vector(0,0,0),App.Vector(1,0,0),180)
+ if name=='ChassisWithLeftMotorA':shape.rotate(App.Vector(0,0,0),App.Vector(1,0,0),180)
  elif name.startswith('CableClamp'):shape.rotate(App.Vector(),App.Vector(1,0,0),180)
  bb=shape.optimalBoundingBox();shape.translate(App.Vector(-bb.XMin,-bb.YMin,-bb.ZMin))
  mesh=MeshPart.meshFromShape(Shape=shape,LinearDeflection=.01,AngularDeflection=.06,Relative=False)
