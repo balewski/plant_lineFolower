@@ -25,7 +25,7 @@ The native FreeCAD files are the design sources; there are no builder scripts fo
 | CableClamp1–3 | `main_lower_deck` | `print_lower_deck` | 6 × 25 × 3 (CableClamp3 is 25 × 6 × 3) |
 | FrontPillarFrame | `main_pillars` | `print_pillars_sensor` | 106 × 10.5 × 50 |
 | AftPillarFrame | `main_pillars` | `print_pillars_sensor` | 100 × 20 × 50 |
-| SensorHolder, CoverStrip, BuzzerHolder | `main_photo_sensor` | `print_pillars_sensor` (holder), `print_photo_sensor` | 70 × 56 × 11.2; 70 × 29 × 0.5; 23.9 × 20.4 × 5 |
+| SensorHolder, CoverStrip, BuzzerHolder | `main_photo_sensor` | `print_pillars_sensor` (holder), `print_photo_sensor` | 70 × 56 × 11.2; 70 × 29 × 1.6; 23.9 × 20.4 × 5 |
 | TeensyPlatform | `main_upper_deck` | `print_upper_deck` | 110 × 115 × 17 |
 | BoardRetainingClamp | `main_upper_deck` | `print_upper_deck` | 45.6 × 11 × 4.4 |
 | AmmeterSupportC | `main_upper_deck` | `print_upper_deck` | 19.5 × 34 × 2 |

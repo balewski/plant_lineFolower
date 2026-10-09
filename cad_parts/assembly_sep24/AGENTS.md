@@ -44,6 +44,10 @@ This unified document guides automated agents and developers on preparing, slici
    - Emitted G-code must use positive-Z purge travel (lift to Z=1 before lateral movement) to prevent nozzle scraping.
    - Use verified gentler cutter startup macros (press at 5 mm/s to 20 mm/s) to avoid frame impacts.
 
+5. **Do Not Rebuild the Overview Automatically**:
+   - Never rebuild `main_overview.FCStd` (`overview/build_overview.py`) after a CAD or parameter change, even when the changed part appears in it.
+   - The user will say when to rebuild it. Until then, leave it as is and, if useful, mention that it is out of date.
+
 ---
 
 ## 3. End-to-End Printing Workflow
@@ -138,4 +142,4 @@ curl -X POST -H "Content-Type: application/json" \
 | `print_pillars_sensor` | `main_pillars.FCStd`, `main_photo_sensor.FCStd` | `FrontPillarFrame`, `AftPillarFrame`, `SensorHolder` | Front rotated +90° on braced face; aft -90°; sensor holder 180° with removable supports. |
 | `print_upper_deck` | `main_upper_deck.FCStd` | `TeensyPlatform`, `BoardRetainingClamp`, `AmmeterSupportC` | Platform underside flat on bed; clamp and ammeter support flat beside deck. |
 | `print_roof_conical` | `main_roof.FCStd` | `MainRoof` | Inverted (180° around X): broad roof face on bed, columns upward. |
-| `print_photo_sensor` | `main_photo_sensor.FCStd` | `SensorHolder`, `CoverStrip`, `BuzzerHolder` | Holder inverted (180° about X), main face on bed, supports only in the three sensor vaults; cover strip broad face down; buzzer holder ring down. Layer height 0.10 mm. |
+| `print_photo_sensor` | `main_photo_sensor.FCStd` | `SensorHolder`, `CoverStrip`, `BuzzerHolder` | Holder inverted (180° about X), main face on bed, supports only in the three sensor vaults; cover strip broad face down; buzzer holder ring down. Layer height 0.20 mm (0.10 mm feeds filament too slowly and jammed the extruder in a warm chamber). |
